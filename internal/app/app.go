@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fem/internal/api"
 	"fem/internal/store"
+	"fem/migrations"
 	"fmt"
 	"log"
 	"net/http"
@@ -23,6 +24,12 @@ func NewApplication() (*Application,error) {
 	pgDb,err := store.Open()
 	if err != nil {
 		return nil,err
+	}
+
+	// migration hookup with app
+	err = store.Migratefs(pgDb,migrations.FS,".")
+	if err != nil {
+		panic(err)
 	}
 
 
