@@ -25,6 +25,9 @@ func main() {
 		panic(err) // exits the app 
 	}
 
+	// closing db connection
+	defer app.DB.Close() //!defer the execution to the very end of the application
+
 	// ? - otherwise successfully imported function and executed
 	fmt.Println("app is running!")
 

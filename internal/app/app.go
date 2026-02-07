@@ -1,7 +1,9 @@
 package app
 
 import (
+	"database/sql"
 	"fem/internal/api"
+	"fem/internal/store"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,9 +14,17 @@ import (
 type Application struct {
 	Logger *log.Logger
 	WorkoutHandler *api.WorkoutHandler
+	DB *sql.DB
 }
 
 func NewApplication() (*Application,error) {
+
+	// database connection
+	pgDb,err := store.Open()
+	if err != nil {
+		return nil,err
+	}
+
 
 	logger := log.New(os.Stdout,"",log.Ldate | log.Ltime) 
 
@@ -22,10 +32,11 @@ func NewApplication() (*Application,error) {
 
 	// ! Our Handlers will go here
 	workoutHandler := api.NewWorkoutHandler()
-	
+
 	app := &Application{  // taking instance of type struct
 		Logger : logger,
 		WorkoutHandler: workoutHandler,
+		DB: pgDb,
 	}
 	
 	return app,nil // as we had to return both things as we specified in the return type of the function

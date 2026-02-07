@@ -17,7 +17,7 @@ func NewWorkoutHandler() *WorkoutHandler {
 return &WorkoutHandler{}
 }
 
-//! methods --> have base method WorkoutHandler ( points to type which persists changes across app) --> other called via base this one
+//! methods --> have base method WorkoutHandler ( points to type which persists changes across app) --> other called via base this one	
 func (wh *WorkoutHandler) HandleWorkoutByID(w http.ResponseWriter, req *http.Request) {
 // extracting id from url via chi
 paramsWorkoutID := chi.URLParam(req,"id") // passing req and "slug" being route params
