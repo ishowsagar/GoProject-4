@@ -3,10 +3,11 @@ package main
 // imports
 import (
 	"fem/internal/app"
+	"fem/internal/routes"
+	"flag"
 	"fmt"
 	"net/http"
 	"time"
-	"flag"
 )
 
 // Main function where go application spins up
@@ -15,7 +16,7 @@ func main() {
 	// fallback port if not specified
 	var port int
 	flag.IntVar(&port,"port",8080,"GO BACKEND SERVER!")
-	flag.Parse() 
+	flag.Parse() // execute it
 
 	app,err := app.NewApplication() //! returns Logger's output
 
@@ -28,19 +29,21 @@ func main() {
 	fmt.Println("app is running!")
 
 	//! server management
-	
+
+	// ? - handles request on this path
+	r := routes.SetupRoutes(app)	// needs to pass logger as it points to application struct
 	// creating instance of a server
 	server := &http.Server{
 		Addr: fmt.Sprintf(":%d",port),
 		IdleTimeout: time.Minute,
+		Handler: r, //! now parent handler is set for all route req --> handled through chi routes
 		ReadTimeout: 10 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}
 
 	app.Logger.Printf("App is running on port : %d\n",port)
 
-	// handles request on this path
-	http.HandleFunc("/app",HealthCheck)
+
 
 	// * server listens for any incoming request
 	err = server.ListenAndServe() // returns error if failed to listen for a sever
@@ -51,8 +54,3 @@ func main() {
 
 }
 
-// cb functions  --> r pointer to keep the data persisted 
-func HealthCheck(w http.ResponseWriter,req *http.Request) {
-	fmt.Fprintf(w,"Status is available\n")
-	 w.Write([]byte("hello from Go developer!"))
-}
