@@ -56,24 +56,24 @@ func (pg *PostgresWorkoutStore) CreateWorkout(workout *Workout) (*Workout, error
 	// * inserting main workout data first
 	query :=
 		`
-  INSERT INTO workouts (title, description, duration_minutes, calories_burned)
-  VALUES ($1, $2, $3, $4)
+  INSERT INTO workouts (user_id, title, description, duration_minutes, calories_burned)
+  VALUES ($1, $2, $3, $4, $5)
   RETURNING id 
   `
 
-	err = tx.QueryRow(query, workout.Title, workout.Description, workout.DurationMinutes, workout.CaloriesBurned).Scan(&workout.ID)
+	err = tx.QueryRow(query, workout.UserID, workout.Title, workout.Description, workout.DurationMinutes, workout.CaloriesBurned).Scan(&workout.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	// ? - now looping through each exercise entry and saving them
-	for _, entry := range workout.Entries {
+	for i := range workout.Entries {
 		query := `
     INSERT INTO workout_entries (workout_id, exercise_name, sets, reps, duration_seconds, weight, notes, order_index)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     RETURNING id
     `
-		err = tx.QueryRow(query, workout.ID, entry.ExerciseName, entry.Sets, entry.Reps, entry.DurationSeconds, entry.Weight, entry.Notes, entry.OrderIndex).Scan(&entry.ID)
+		err = tx.QueryRow(query, workout.ID, workout.Entries[i].ExerciseName, workout.Entries[i].Sets, workout.Entries[i].Reps, workout.Entries[i].DurationSeconds, workout.Entries[i].Weight, workout.Entries[i].Notes, workout.Entries[i].OrderIndex).Scan(&workout.Entries[i].ID)
 		if err != nil {
 			return nil, err
 		}

@@ -40,7 +40,7 @@ func NewApplication() (*Application,error) {
 
 
 	// ! Our Handlers will go here
-	workoutHandler := api.NewWorkoutHandler(workoutStore)
+	workoutHandler := api.NewWorkoutHandler(workoutStore,logger)
 
 	app := &Application{  // taking instance of type struct
 		Logger : logger,
