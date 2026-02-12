@@ -3,6 +3,8 @@ package api
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
+	"fem/internal/middleware"
 	"fem/internal/store"
 	"fem/internal/utils"
 	"log"
@@ -59,6 +61,16 @@ wh.logger.Printf("Error : decodingCreateWorkout : %v ",err)
 utils.WriteJson(w,http.StatusBadRequest,utils.Envelope{"error" : "Invalid request sent"})
 	return
 }
+
+//  Current live user with get user which is fetched from context using getUser method
+currentUser := middleware.GetUser(req)
+if currentUser == nil || currentUser == store.AnonymousUser {
+	utils.WriteJson(w,http.StatusBadRequest,utils.Envelope{"error" : "you must be logged in"})
+	return
+}
+
+// assinig that fetched id to workout
+workout.UserID = currentUser.ID
 
 createWorkout,err := wh.workstore.CreateWorkout(&workout)
 if err !=nil {
@@ -127,6 +139,29 @@ var updateWorkoutRequest struct {
 		existingWorkout.Entries = updateWorkoutRequest.Entries
 	}
 
+	//  Current live user with get user which is fetched from context using getUser method
+	currentUser := middleware.GetUser(req)
+	if currentUser == nil || currentUser == store.AnonymousUser {
+	utils.WriteJson(w,http.StatusBadRequest,utils.Envelope{"error" : "you must be logged in to update"})
+	return
+	}
+
+	workoutOwner,err := wh.workstore.GetWorkoutOwner(workoutID)
+	if err != nil {
+		if errors.Is(err,sql.ErrNoRows) {
+			utils.WriteJson(w,http.StatusBadRequest,utils.Envelope{"error" : "workout does not exists"})
+			return	
+		}
+		utils.WriteJson(w,http.StatusInternalServerError,utils.Envelope{"error" : "internal server error"})
+		return
+	}
+
+	// !current user who is live on but isn't this workout owner ... trying to alternate someone's workout
+	if workoutOwner != currentUser.ID {
+		utils.WriteJson(w,http.StatusForbidden,utils.Envelope{"error" : "you are not authorized to update this workout"})
+		return
+	}
+
 	// ! make sure ID is set for the update
 	existingWorkout.ID = int(workoutID)
 	
@@ -157,6 +192,31 @@ if err != nil {
 http.NotFound(w,req)
 return
 }  
+
+	//!  Current live user with get user which is fetched from context using getUser method
+	currentUser := middleware.GetUser(req)
+	if currentUser == nil || currentUser == store.AnonymousUser {
+	utils.WriteJson(w,http.StatusBadRequest,utils.Envelope{"error" : "you must be logged in to update"})
+	return
+	}
+
+	workoutOwner,err := wh.workstore.GetWorkoutOwner(workoutID)
+	if err != nil {
+		if errors.Is(err,sql.ErrNoRows) {
+			utils.WriteJson(w,http.StatusBadRequest,utils.Envelope{"error" : "workout does not exists"})
+			return	
+		}
+		utils.WriteJson(w,http.StatusInternalServerError,utils.Envelope{"error" : "internal server error"})
+		return
+	}
+
+	// if current user is not owner of that workout the client is trying to modify it
+	if workoutOwner != currentUser.ID {
+		utils.WriteJson(w,http.StatusForbidden,utils.Envelope{"error" : "you are not authorized to delete this workout"})
+		return
+	}
+
+
 
 err = wh.workstore.DeleteWorkout(workoutID)
 if err == sql.ErrNoRows {

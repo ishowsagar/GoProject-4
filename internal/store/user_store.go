@@ -156,7 +156,7 @@ func (s *PostgresUserStore) GetUserToken(scope string,plaintextpassword string) 
 	query := `
 	 Select u.id, u.username, u.email,u.password_hash, u.bio, u.created_at, u.updated_at 
 	 from users u
-	 INNER JOIN token t
+	 INNER JOIN tokens t
 	 ON
 	 t.user_id = u.id
 	 WHERE
@@ -186,5 +186,5 @@ func (s *PostgresUserStore) GetUserToken(scope string,plaintextpassword string) 
 		return nil,err
 	}
 
-	return nil,err
+	return user,nil
 }
